@@ -23,6 +23,8 @@ export const queryKeys = {
     byUserId: (userId: string) => ['userStats', { userId }] as const,
   },
   leaderboard: {
+     list: () => ['leaderboard'] as const,
+   },
     all: ['leaderboard'] as const,
     list: () => ['leaderboard', 'list'] as const,
   },

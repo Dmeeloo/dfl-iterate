@@ -16,13 +16,17 @@ export async function getRecentActivity(): Promise<ActivityEvent[]> {
 
 export async function addActivityEvent({type, label}: {type: ActivityEventType, label: string}) {
   await simulateNetworkDelay();
+  const trimmedLabel = label.trim();
+  if (!trimmedLabel) {
+    throw new Error("Activity label is required");
+  }  
   const activityEvents = getActivityEventsData();
   const newEvent: ActivityEvent = {
     id: crypto.randomUUID(),
     type,
-    label,
+    label: trimmedLabel,
     occurredAt: new Date().toISOString(),
   };
-  setActivityEventsData([...activityEvents, newEvent]);
+  setActivityEventsData([newEvent, ...activityEvents]);
   return newEvent;
 }

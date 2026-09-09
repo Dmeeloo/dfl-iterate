@@ -79,11 +79,11 @@ export function HomePageTopDataSlots() {
           <RecentActivityFeed 
             events={activityEvents}
             onRegister={() => addActivityEvent({ type: 'lesson_completed',
-              label: 'Você completou uma ativade'})}
+              label: 'Você completou uma atividade'})}
             isRegistering={isRegistering}
           />
         )}
-        {isAddError && <p>Erro ao registrar ativade.</p>}
+        {isAddError && <p>Erro ao registrar atividade.</p>}
       </section>
     </div>
   );

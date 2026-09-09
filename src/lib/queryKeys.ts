@@ -1,16 +1,16 @@
 export const queryKeys = {
   lessons: {
-    all: ["lessons"] as const,
-    byId: (id: string) => ["lessons", id] as const,
+    all: ['lessons'] as const,
+    byId: (id: string) => ['lessons', id] as const,
   },
   activities: {
-    byLesson: (lessonId: string) => ["activities", { lessonId }] as const,
+    byLesson: (lessonId: string) => ['activities', { lessonId }] as const,
   },
   announcements: {
     all: ['announcements'] as const,
   },
   activityEvents: {
-    recent: () => ['activityEvents', "recent"] as const,
+    recent: () => ['activityEvents', 'recent'] as const,
   },
   userPreferences: {
     current: ['user-preferences', 'current'] as const,
@@ -23,15 +23,13 @@ export const queryKeys = {
     byUserId: (userId: string) => ['userStats', { userId }] as const,
   },
   leaderboard: {
-     list: () => ['leaderboard'] as const,
-   },
     all: ['leaderboard'] as const,
-    list: () => ['leaderboard', 'list'] as const,
+    list: () => ['leaderboard'] as const,
   },
   notifications: {
     all: ['notifications'] as const,
   },
   userProfile: {
-    current: ["user-profile"] as const,
+    current: ['user-profile'] as const,
   },
 } as const;

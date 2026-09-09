@@ -18,47 +18,50 @@ import {
   NotificationBellIcon,
   NotificationList,
 } from '@/components/data-layer';
+import { previewAchievements } from '@/components/data-layer/preview.mock';
 import {
-  previewAchievements,
-  previewUserPreferences,
-  previewNotifications,
-  previewUserProfile,
-} from '@/components/data-layer/preview.mock';
-import { useGetUserPreferences } from '@/hooks';
+  useGetUserPreferences,
+  useUpdateUserPreferences,
+  useGetUserProfile,
+  useGetUserStats,
+} from '@/hooks';
 import { PreviewSectionLabel } from './PreviewSectionLabel';
-import { useGetUserProfile } from '@/hooks';
-import { i } from 'framer-motion/client';
-import { useGetUserStats } from '@/hooks';
 
-/**
- * Preview + slots T1, T2, T4, T6 no header da `HomePage`.
- *
- * Fellow T1: substituir mock por `useGetUserProfile()` + estados.
- * Fellow T4: substituir mock por `useGetUserStats()`.
- * Fellow T6: drawer 🏆 → `useGetUserAchievements()`.
- * Fellow T2: drawer ⚙️ → `useGetUserPreferences()`.
- * Fellow T10: drawer 🔔 → `useGetNotifications()`.
- */
 export function HomePageHeaderDataSlots() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [achievementsOpen, setAchievementsOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  
-  const { data: userProfileData, isPending: isUserProfilePending, isError: isUserProfileError, refetch: userProfileRefetch, } = useGetUserProfile();
-  
+  const [pendingField, setPendingField] = useState<'theme' | 'sound' | null>(
+    null,
+  );
+
+  const {
+    data: userProfileData,
+    isPending: isUserProfilePending,
+    isError: isUserProfileError,
+    refetch: userProfileRefetch,
+  } = useGetUserProfile();
+
   const {
     data: notificationsData,
     isPending: isNotificationsPending,
     isError: isNotificationsError,
     refetch: notificationsRefetch,
   } = useGetNotifications();
-  
+
   const {
     data: preferences,
     isPending: isPreferencesPending,
     isError: isPreferencesError,
+    isFetching: isPreferencesFetching,
     refetch: refetchPreferences,
   } = useGetUserPreferences();
+
+  const {
+    mutate: updatePreferences,
+    isPending: isUpdatingPreferences,
+    isError: isUpdateError,
+  } = useUpdateUserPreferences();
 
   const {
     data: userStatsData,
@@ -66,6 +69,28 @@ export function HomePageHeaderDataSlots() {
     isPending: userStatsIsPending,
     refetch: userStatsRefetch,
   } = useGetUserStats();
+
+  const isSavingPreferences = isUpdatingPreferences || isPreferencesFetching;
+  const isSavingTheme = pendingField === 'theme' && isSavingPreferences;
+  const isSavingSound = pendingField === 'sound' && isSavingPreferences;
+
+  const handleToggleTheme = () => {
+    if (!preferences) return;
+    setPendingField('theme');
+    updatePreferences({
+      ...preferences,
+      theme: preferences.theme === 'dark' ? 'light' : 'dark',
+    });
+  };
+
+  const handleToggleSound = () => {
+    if (!preferences) return;
+    setPendingField('sound');
+    updatePreferences({
+      ...preferences,
+      soundEffectsEnabled: !preferences.soundEffectsEnabled,
+    });
+  };
 
   return (
     <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-end">
@@ -124,7 +149,9 @@ export function HomePageHeaderDataSlots() {
             className="h-9 w-9 shrink-0"
             aria-label="Notificações"
           >
-            <NotificationBellIcon unreadCount={notificationsData?.unreadCount ?? 0} />
+            <NotificationBellIcon
+              unreadCount={notificationsData?.unreadCount ?? 0}
+            />
           </Button>
         </DrawerTrigger>
         <DrawerContent className="max-h-[85vh]">
@@ -142,7 +169,11 @@ export function HomePageHeaderDataSlots() {
                 <p className="text-sm text-destructive mb-2">
                   Erro ao carregar notificações.
                 </p>
-                <Button variant="outline" size="sm" onClick={() => notificationsRefetch()}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => notificationsRefetch()}
+                >
                   Tentar de novo
                 </Button>
               </div>
@@ -158,7 +189,7 @@ export function HomePageHeaderDataSlots() {
         </DrawerContent>
       </Drawer>
 
-    {/* SLOT T2 */}
+      {/* SLOT T2 / M2 */}
       <Drawer open={settingsOpen} onOpenChange={setSettingsOpen}>
         <DrawerTrigger asChild>
           <Button
@@ -173,17 +204,33 @@ export function HomePageHeaderDataSlots() {
         </DrawerTrigger>
         <DrawerContent className="max-h-[85vh]">
           <div className="overflow-y-auto px-4 pb-2 pt-2">
+            <PreviewSectionLabel taskId="T2" />
             {isPreferencesPending && <p>Carregando preferências…</p>}
             {isPreferencesError && (
               <div>
                 <p>Não foi possível carregar suas preferências.</p>
-                <Button type="button" variant="outline" onClick={() => refetchPreferences()}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => refetchPreferences()}
+                >
                   Tentar de novo
                 </Button>
               </div>
             )}
             {!isPreferencesPending && !isPreferencesError && preferences && (
-              <AppearanceSettingsPanel preferences={preferences} />
+              <AppearanceSettingsPanel
+                preferences={preferences}
+                onToggleTheme={handleToggleTheme}
+                onToggleSound={handleToggleSound}
+                isUpdatingTheme={isSavingTheme}
+                isUpdatingSound={isSavingSound}
+                updateError={
+                  isUpdateError
+                    ? 'Não foi possível salvar suas preferências.'
+                    : undefined
+                }
+              />
             )}
           </div>
           <DrawerClose asChild>
@@ -194,24 +241,17 @@ export function HomePageHeaderDataSlots() {
         </DrawerContent>
       </Drawer>
 
-
       {/* SLOT T1 */}
       {isUserProfilePending ? (
-            <div>Loading...</div>
-         ) : isUserProfileError ? (
-            <>
-              <span>Erro</span>
-              <Button onClick={() => userProfileRefetch()}>
-                Tentar de novo
-              </Button>
-            </>
-         ) : (
-            <UserProfileCard 
-              profile={userProfileData} 
-              variant="compact" 
-            />
-         )
-      }
+        <div>Loading...</div>
+      ) : isUserProfileError ? (
+        <>
+          <span>Erro</span>
+          <Button onClick={() => userProfileRefetch()}>Tentar de novo</Button>
+        </>
+      ) : (
+        <UserProfileCard profile={userProfileData} variant="compact" />
+      )}
     </div>
   );
 }

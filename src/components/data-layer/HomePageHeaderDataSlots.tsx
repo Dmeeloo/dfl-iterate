@@ -1,4 +1,5 @@
 import { useGetNotifications } from '@/hooks/useGetNotifications';
+import { useMarkNotificationAsRead } from '@/hooks';
 import { useState, useEffect } from 'react';
 import { Settings, Trophy } from 'lucide-react';
 import { Button } from '@devfellowship/components';
@@ -24,7 +25,7 @@ import {
   useUpdateUserPreferences,
   useGetUserProfile,
   useGetUserStats,
-  useUpdateUserProfile
+  useUpdateUserProfile,
 } from '@/hooks';
 import { PreviewSectionLabel } from './PreviewSectionLabel';
 
@@ -57,6 +58,14 @@ export function HomePageHeaderDataSlots() {
     isError: isNotificationsError,
     refetch: notificationsRefetch,
   } = useGetNotifications();
+
+  const {
+    mutate: markNotificationAsReadMutate,
+    isPending: isMarkingNotificationAsRead,
+    isError: isMarkNotificationError,
+    variables: markingNotificationId,
+    reset: resetMarkNotification,
+  } = useMarkNotificationAsRead();
 
   const {
     data: preferences,
@@ -163,7 +172,7 @@ export function HomePageHeaderDataSlots() {
         </DrawerContent>
       </Drawer>
 
-      {/* SLOT T10 */}
+      {/* SLOT T10 / M10 */}
       <Drawer open={notificationsOpen} onOpenChange={setNotificationsOpen}>
         <DrawerTrigger asChild>
           <Button
@@ -201,9 +210,27 @@ export function HomePageHeaderDataSlots() {
                   Tentar de novo
                 </Button>
               </div>
-            ) : (
-              <NotificationList summary={notificationsData} />
-            )}
+            ) : notificationsData ? (
+              <>
+                {isMarkNotificationError && (
+                  <p className="text-sm text-destructive text-center mb-2">
+                    Não foi possível marcar como lida. Tente de novo.
+                  </p>
+                )}
+                <NotificationList
+                  summary={notificationsData}
+                  onMarkAsRead={(id) => {
+                    resetMarkNotification();
+                    markNotificationAsReadMutate(id);
+                  }}
+                  isMarkingId={
+                    isMarkingNotificationAsRead
+                      ? markingNotificationId
+                      : undefined
+                  }
+                />
+              </>
+            ) : null}
           </div>
           <DrawerClose asChild>
             <Button variant="outline" className="mx-4 mb-4">
@@ -303,4 +330,3 @@ export function HomePageHeaderDataSlots() {
     </div>
   );
 }
-

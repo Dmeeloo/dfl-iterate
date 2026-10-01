@@ -5,3 +5,5 @@ export * from './announcements.service';
 export * from './activity-events.service';
 export * from './user-stats.service';
 export * from './user-preferences.service';
+export * from './notifications.service';
+
